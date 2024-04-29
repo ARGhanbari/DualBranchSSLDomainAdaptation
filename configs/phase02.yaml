@@ -1,0 +1,83 @@
+BasicConfig:
+    LOGGER: null    # null or wandb
+    SEED: 123
+    DETERMINISTIC_CUDANN: True
+    BENCHMARK_CUDANN: False
+    DETERMINISTIC_ALGORITHM: True
+    DEVICE: cuda
+    DATASET: WheatData
+    ROOT_LOG_DIR: Experiments/Inference/
+    ROOT_CHECKPOINT_DIR: Experiments/Checkpoints/
+    DEVELOPMENT_PHASE: TRAIN       # Options: TRAIN, TEST, PRED
+    PROJECT_NAME: W&BProjectName     # W&B project name when `LOGGER: wandb`
+    ENTITY: W&BEntityName            # W&B entity  name  when `LOGGER: wandb`
+    EXPERIMENT_NAME: Phase2Exp_002   # W&B and the local project experiment name: name and number are separated by '_'
+    TESTEXPERIMENTDIRNAME: TestInternalFrames
+    PREDICTION_DIR: Experiments/Predictions/Phase2Exp_002/PredictionInternalFrames/
+
+TrainConfig:
+    TIMESTEPS: 1000
+    ADDEDNOISETIMESTEPS: 750
+    DIFFUSION_PATCH_SIZE: 128
+    IMG_SHAPE: [3, 256, 256]
+    NUM_EPOCHS: 50
+    START_FINETUNING_EPOCH: 1000     # After this epoch, the encoder and decoder will be trained
+    LR: 1e-4
+    WD: 0.0
+    ERASING_PROBABILITY: 0.5
+    REAL_TRAIN_METADATA_PATH:
+      - data/frames/frames_without_valid_test.csv
+      - data/frames/green/gfore7_real_frames.csv
+    REAL_TRAIN_SUBSET_SIZE: -1                        # Select a subset of the training data in each epoch. `-1` to use all the data.
+    REAL_VALID_METADATA_PATH:
+      - data/validation/rotated/rotated_frames_validations.csv
+    SIMU_TRAIN_METADATA_PATH:
+        - data/new_simulated_data/simulation/weak/yellow/train_dataset_yellow.csv
+        - data/new_simulated_data/simulation/weak/green/train_dataset_green.csv
+    SIMU_TRAIN_SUBSET_SIZE: -1
+    SIMU_VALID_METADATA_PATH:
+        - data/new_simulated_data/simulation/weak/yellow/valid_dataset_yellow.csv
+        - data/new_simulated_data/simulation/weak/green/valid_dataset_green.csv
+    TEST_METADATA_PATH:
+      - data/test/frames/frames_test_metadata.csv
+      # - data/test/newly_segmented/newly_segmented.csv
+    PRED_METADATA_PATH:
+      - data/test/frames/frames_test_metadata.csv
+
+    TRANSFORM_MEAN: [0.5627222, 0.4335646, 0.2469568]
+    TRANSFORM_STD:  [0.2338398, 0.2359932, 0.1958107]
+    BATCH_SIZE: 32
+    SHUFFLE: True
+    NUM_WORKERS: 8
+    PIN_MEMORY: True
+    REVERSE_DIFFUSION_NUM_IMAGES: 8
+    REVERSE_DIFFUSION_NUM_ROWS: 4
+    SAVE_REVERSE_AS_PNG: True
+    MASK_LOSSES:
+      - bce
+      - dice
+    IMAGE_LOSSES:
+      - mse
+      - ssim
+      - perceptual
+
+ModelConfig:
+    CHANNELS: 8
+    CHANNEL_MULTIPLIERS: [4, 8, 16, 32, 32, 64]  # 32, 64, 128, 256, 512
+    N_RESNET_BLOCKS: 2
+    IN_CHANNELS: 3       # Changed the input channels from 3 to 4 to include the mask and noisy mask.
+    OUT_CHANNELS: 3
+    Z_CHANNELS: 1024
+    DROPOUT_RATE: 0.1
+    PRETRAIN_PATH: Experiments/Checkpoints/Phase1Exp_001/Seg_***.pt  # Set the best model, trained in the previous phase.
+    # ================= Model initializer parameters
+    INIT_MODEL: False
+    INIT_MODEL_PARAMS:
+        method: "kaiming_normal"      # kaiming_normal, kaiming_uniform, normal, uniform, xavier_normal, xavier_uniform
+        mean: 0.0                     # mean of normal distribution
+        std: 0.5                      # standard deviation for normal distribution
+        low: 0.0                      # minimum threshold for uniform distribution
+        high: 1.0                     # maximum threshold for uniform distribution
+        mode: "fan_in"                # either 'fan_in' (default) or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the variance of the weights in the forward pass. Choosing 'fan_out' preserves the magnitudes in the backwards pass.
+        nonlinearity: "leaky_relu"    # the non-linear function (nn.functional name), recommended to use only with 'relu' or 'leaky_relu' (default).
+        gain: 1.0                     # an optional scaling factor for xavier initialization
